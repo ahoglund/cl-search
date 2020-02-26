@@ -1,0 +1,8 @@
+<h1>Search Craigslist</h1>
+
+<%= form_tag "/search/results", method: :get do |f| %>
+  <div><%= search_field_tag 'query' %></div>
+  <div>Title Only: <%= check_box_tag 'title_only', 1, true %></div>
+  <div>Has Pic?: <%= check_box_tag 'has_pic', 1, true %></div>
+  <div><%= submit_tag 'search' %></div>
+<% end %>

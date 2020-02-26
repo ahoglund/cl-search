@@ -1,0 +1,17 @@
+<h1>Search Results</h1>
+
+<%= link_to "New Search", "/search/new" %>
+
+<% @results.each do |city, links| %>
+  <% next if links.empty? %>
+  <%= content_tag :h2, city.humanize %>
+  <% links.group_by { |link, details| details[:price] }.each do |price, items| %>
+    <% items.each do |link, attrs| %>
+      <div><%= link_to CGI.unescapeHTML(attrs[:title]), link, target: "_blank" %></div>
+      <div>Price: <%= attrs[:price] %></div>
+      <br />
+      <%# <div>DEBUG: <%= debug details[:item] %1></div> %>
+      <br />
+    <% end %>
+  <% end %>
+<% end %>
