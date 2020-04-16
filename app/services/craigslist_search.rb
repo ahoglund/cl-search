@@ -391,6 +391,8 @@ easttexas victoriatx
   GARAGE_MOVING    = "gms"
 
   class Result
+    attr_reader :results, :city
+
     def initialize(query, city, params = {})
       encoded_query = URI::encode(query)
       @params       = params
@@ -399,66 +401,71 @@ easttexas victoriatx
     rescue SocketError, Net::OpenTimeout
       @results = {}
     end
+
+    def results
+      begin
+        @rss.parse
+      rescue RSS::MissingTagError
+        # for some reason it works the 2nd time
+        @rss.parse
+      end
+      @results ||= @rss.parse.items.each_with_object({}) do |item, obj|
+        price = CGI.unescapeHTML(item.title).split(/\$/).last.to_i
+        obj[item.link] = {}
+        obj[item.link][:title] = item.title
+        obj[item.link][:price] = price
+        obj[item.link][:item] = item
+      end
+
+      @results
+    end
+    def search_type
+      "sss"
+    end
+
+    def url_with_query(query)
+      "http://#{city}.craigslist.org/search/#{search_type}?#{search_title_only}#{has_pic}format=rss&query=#{query}"
+    end
+
+    def search_title_only
+      @params[:title_only] ? "srchType=T&" : ""
+    end
+
+    def has_pic
+      @params[:has_pic] ? "hasPic=1&" : ""
+    end
   end
 
-  def self.search_state(query, params, cities)
-    results = {}
+  def search_state(cities)
     cities.each_slice(100) do |slice|
       threads = slice.each_with_object([]) do |city, threads|
         threads << Thread.new do
-          results[city] = Result.new(query, city, params).results
+          @results[city] = Result.new(query, city, params).results
         end
       end
 
       threads.each(&:join)
     end
-
-    results
   end
 
   def self.search(query, params)
     new(query, params).tap(&:perform)
   end
 
+  attr_reader :query, :params, :results
+
+  def initialize(query, params)
+    @query = query
+    @params = params
+    @results = {}
+  end
+
   def perform
-    # search_state(query, params, TEXAS_CITIES)
-    #   .merge(search_state(query, params, NEW_MEXICO_CITIES))
-    #   .merge(search_state(query, params, FLORIDA_CITIES))
-    #   .merge(search_state(query, params, ARIZONA_CITIES))
-    #   .merge(search_state(query, params, CITIES))
+    search_state(TEXAS_CITIES)
+    search_state(NEW_MEXICO_CITIES)
+    search_state(FLORIDA_CITIES)
+    search_state(ARIZONA_CITIES)
+    search_state(CITIES)
   end
 
-  attr_reader :city
-
-  def results
-    return {} if @rss&.parse.nil?
-    @results ||= @rss.parse.items.each_with_object({}) do |item, obj|
-      price = CGI.unescapeHTML(item.title).split(/\$/).last.to_i
-      obj[item.link] = {}
-      obj[item.link][:title] = item.title
-      obj[item.link][:price] = price
-      obj[item.link][:item] = item
-    end
-
-    @results
-  rescue RSS::MissingTagError => e
-    Rails.logger.info("error for #{city}: #{e}")
-    {}
-  end
-
-  def search_type
-    "sss"
-  end
-
-  def url_with_query(query)
-    "http://#{city}.craigslist.org/search/#{search_type}?#{search_title_only}#{has_pic}format=rss&query=#{query}"
-  end
-
-  def search_title_only
-    @params[:title_only] ? "srchType=T&" : ""
-  end
-
-  def has_pic
-    @params[:has_pic] ? "hasPic=1&" : ""
-  end
 end
