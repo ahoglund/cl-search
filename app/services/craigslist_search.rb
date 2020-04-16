@@ -397,28 +397,34 @@ easttexas victoriatx
       encoded_query = URI::encode(query)
       @params       = params
       @city         = city
-      @rss          = RSS::Parser.new(url_with_query(encoded_query))
-    rescue SocketError, Net::OpenTimeout
-      @results = {}
+      @url          = url_with_query(encoded_query)
     end
 
     def results
+      require 'open-uri'
       begin
-        @rss.parse
-      rescue RSS::MissingTagError
-        # for some reason it works the 2nd time
-        @rss.parse
-      end
-      @results ||= @rss.parse.items.each_with_object({}) do |item, obj|
-        price = CGI.unescapeHTML(item.title).split(/\$/).last.to_i
-        obj[item.link] = {}
-        obj[item.link][:title] = item.title
-        obj[item.link][:price] = price
-        obj[item.link][:item] = item
+        open(@url) do |rss|
+          # feed = RSS::Parser.parse(rss, validate: false)
+          SimpleRSS.item_tags << "enc"
+          feed = SimpleRSS.parse(rss)
+          return {} unless feed
+
+          @results ||= feed.items.each_with_object({}) do |item, obj|
+            price = CGI.unescapeHTML(item.title).split(/\$/).last.to_i
+            obj[item.link] ||= {}
+            obj[item.link][:title] = item.title
+            obj[item.link][:price] = price
+            obj[item.link][:item] = item
+            obj[item.link][:description] = item.description
+          end
+        end
+      rescue SocketError, Net::OpenTimeout
+        @results = {}
       end
 
       @results
     end
+
     def search_type
       "sss"
     end

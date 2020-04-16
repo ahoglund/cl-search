@@ -9,8 +9,11 @@
     <% items.each do |link, attrs| %>
       <div><%= link_to CGI.unescapeHTML(attrs[:title]), link, target: "_blank" %></div>
       <div>Price: <%= attrs[:price] %></div>
+      <div>Description: <%= attrs[:description] %></div>
       <br />
-      <%# <div>DEBUG: <%= debug details[:item] %1></div> %>
+      <% if @debug %>
+        <code><%= debug attrs[:item] %></code>
+      <% end %>
       <br />
     <% end %>
   <% end %>
