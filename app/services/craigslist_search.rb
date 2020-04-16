@@ -403,7 +403,7 @@ easttexas victoriatx
     def results
       require 'open-uri'
       begin
-        open(@url) do |rss|
+        URI.open(@url) do |rss|
           # feed = RSS::Parser.parse(rss, validate: false)
           SimpleRSS.item_tags << "enc"
           feed = SimpleRSS.parse(rss)
