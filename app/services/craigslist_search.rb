@@ -394,7 +394,7 @@ easttexas victoriatx
     attr_reader :results, :city
 
     def initialize(query, city, params = {})
-      encoded_query = URI::encode(query)
+      encoded_query = URI.encode_www_form(['query', query])
       @params       = params
       @city         = city
       @url          = url_with_query(encoded_query)
@@ -430,7 +430,7 @@ easttexas victoriatx
     end
 
     def url_with_query(query)
-      "http://#{city}.craigslist.org/search/#{search_type}?#{search_title_only}#{has_pic}format=rss&query=#{query}"
+      "http://#{city}.craigslist.org/search/#{search_type}?#{search_title_only}#{has_pic}format=rss&#{query}"
     end
 
     def search_title_only
