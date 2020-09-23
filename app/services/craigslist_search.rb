@@ -455,7 +455,6 @@ easttexas victoriatx
   end
 
   def self.search(query, params)
-    binding.pry
     new(query, params).tap(&:perform)
   end
 
