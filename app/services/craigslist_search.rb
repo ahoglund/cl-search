@@ -394,7 +394,7 @@ easttexas victoriatx
     attr_reader :results, :city
 
     def initialize(query, city, params = {})
-      encoded_query = URI.encode_www_form(['query', query])
+      encoded_query = URI.encode_www_form([query])
       @params       = params
       @city         = city
       @url          = url_with_query(encoded_query)
@@ -403,6 +403,7 @@ easttexas victoriatx
     def results
       require 'open-uri'
       begin
+        Rails.logger.info "URL: #{@url}"
         URI.open(@url) do |rss|
           # feed = RSS::Parser.parse(rss, validate: false)
           SimpleRSS.item_tags << "enc"
@@ -430,7 +431,7 @@ easttexas victoriatx
     end
 
     def url_with_query(query)
-      "http://#{city}.craigslist.org/search/#{search_type}?#{search_title_only}#{has_pic}format=rss&#{query}"
+      "http://#{city}.craigslist.org/search/#{search_type}?#{search_title_only}#{has_pic}format=rss&query=#{query}"
     end
 
     def search_title_only
